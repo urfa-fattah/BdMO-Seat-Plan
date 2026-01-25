@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BdMO Smart Portal 2026</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BdMO 2026">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4338ca">
+    <meta name="description" content="Bangladesh Mathematical Olympiad 2026 - Seat Finder & Admin Portal">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .premium-gradient { background: radial-gradient(circle at top right, #4338ca, #1e1b4b, #0f172a); }
+        .tab-active { background: white; color: #1e1b4b; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        /* Installation Prompt */
+        .install-prompt {
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="premium-gradient min-h-screen text-slate-100">
+    <div id="root"></div>
+
+    <!-- PWA Installation Prompt -->
+    <div id="installPrompt" class="hidden fixed bottom-0 left-0 right-0 bg-gradient-to-r from-indigo-600 to-purple-600 p-4 shadow-2xl install-prompt z-50">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-2 rounded-xl">
+                    <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg"></div>
+                </div>
+                <div>
+                    <h3 class="font-bold">Install BdMO Portal</h3>
+                    <p class="text-sm text-slate-200">Get quick access and work offline</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="installCancel" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">Later</button>
+                <button id="installButton" class="px-4 py-2 rounded-lg bg-white text-indigo-600 font-bold hover:bg-slate-100 transition-colors">Install</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 py-6 text-center border-t border-white/10 bg-white/5">
+        <div class="max-w-5xl mx-auto px-6">
+            <p class="text-slate-400">
+                © 2026 BdMO Smart Portal. Created by 
+                <span class="font-semibold text-slate-300"> Urfa Hasan Fattah & Rifatuzzaman Rifat</span>.
+                All rights reserved.
+            </p>
+            <p class="text-sm text-slate-500 mt-2">Designed for Bangladesh Mathematical Olympiad 2026</p>
+        </div>
+    </footer>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- UI Components ---
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => { lucide.createIcons(); }, [name]);
+            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+        };
+
+        // --- PWA Installation Handler ---
+        const PWAHandler = () => {
+            const [installPrompt, setInstallPrompt] = useState(null);
+            const [isInstallable, setIsInstallable] = useState(false);
+
+            useEffect(() => {
+                // Listen for beforeinstallprompt event
+                const handler = (e) => {
+                    e.preventDefault();
+                    setInstallPrompt(e);
+                    setIsInstallable(true);
+                    showInstallPrompt();
+                };
+
+                // Check if app is already installed
+                const checkInstalled = () => {
+                    if (window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone === true) {
+                        setIsInstallable(false);
+                    }
+                };
+
+                window.addEventListener('beforeinstallprompt', handler);
+                window.addEventListener('DOMContentLoaded', checkInstalled);
+
+                // Check on page load
+                checkInstalled();
+
+                return () => {
+                    window.removeEventListener('beforeinstallprompt', handler);
+                    window.removeEventListener('DOMContentLoaded', checkInstalled);
+                };
+            }, []);
+
+            const showInstallPrompt = () => {
+                const prompt = document.getElementById('installPrompt');
+                prompt.classList.remove('hidden');
+            };
+
+            const hideInstallPrompt = () => {
+                const prompt = document.getElementById('installPrompt');
+                prompt.classList.add('hidden');
+            };
+
+            const handleInstall = async () => {
+                if (!installPrompt) return;
+                
+                installPrompt.prompt();
+                const { outcome } = await installPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    console.log('PWA installed successfully');
+                    setIsInstallable(false);
+                }
+                
+                hideInstallPrompt();
+                setInstallPrompt(null);
+            };
+
+            // Initialize install buttons
+            useEffect(() => {
+                const installBtn = document.getElementById('installButton');
+                const cancelBtn = document.getElementById('installCancel');
+                
+                if (installBtn) {
+                    installBtn.onclick = handleInstall;
+                }
+                
+                if (cancelBtn) {
+                    cancelBtn.onclick = hideInstallPrompt;
+                }
+                
+                return () => {
+                    if (installBtn) installBtn.onclick = null;
+                    if (cancelBtn) cancelBtn.onclick = null;
+                };
+            }, [installPrompt]);
+
+            // Auto-hide prompt after 10 seconds
+            useEffect(() => {
+                if (isInstallable) {
+                    const timer = setTimeout(() => {
+                        hideInstallPrompt();
+                    }, 10000);
+                    
+                    return () => clearTimeout(timer);
+                }
+            }, [isInstallable]);
+
+            return null;
+        };
+
+        // --- Main App ---
+        const App = () => {
+            const [mode, setMode] = useState('student'); // student | admin
+            const [data, setData] = useState(null);
+            const [activeTab, setActiveTab] = useState('primary');
+            const [rollNumber, setRollNumber] = useState('');
+            const [searchResult, setSearchResult] = useState(null);
+            const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+            // Check online status
+            useEffect(() => {
+                const handleOnline = () => setIsOnline(true);
+                const handleOffline = () => setIsOnline(false);
+
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
+
+            // Fetch initial data with offline support
+            useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        const response = await fetch('data.json');
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const json = await response.json();
+                        setData(json.categories);
+                        
+                        // Cache the data
+                        if ('caches' in window) {
+                            caches.open('bdmo-data').then(cache => {
+                                cache.put('data.json', response);
+                            });
+                        }
+                    } catch (error) {
+                        console.log("Trying to load from cache...");
+                        
+                        // Try to get from cache
+                        if ('caches' in window) {
+                            caches.match('data.json').then(response => {
+                                if (response) {
+                                    return response.json().then(json => {
+                                        setData(json.categories);
+                                    });
+                                }
+                            });
+                        }
+                    }
+                };
+
+                fetchData();
+            }, []);
+
+            // Smart Search Logic
+            const handleSearch = (val) => {
+                setRollNumber(val);
+                if (!val || !data) { setSearchResult(null); return; }
+                const roll = parseInt(val);
+                
+                // 1. Check current category
+                const found = data[activeTab].ranges.find(r => roll >= r.start && roll <= r.end);
+                
+                if (found) {
+                    setSearchResult({ type: 'success', room: found.room, category: data[activeTab].label, time: data[activeTab].time });
+                } else {
+                    // 2. Global Check (Smarter Assistant)
+                    let globalFound = null;
+                    Object.keys(data).forEach(catKey => {
+                        const match = data[catKey].ranges.find(r => roll >= r.start && roll <= r.end);
+                        if (match) globalFound = { room: match.room, label: data[catKey].label, key: catKey, time: data[catKey].time };
+                    });
+
+                    if (globalFound) {
+                        setSearchResult({ type: 'suggestion', ...globalFound });
+                    } else {
+                        setSearchResult({ type: 'not_found' });
+                    }
+                }
+            };
+
+            return (
+                <div className="max-w-5xl mx-auto px-6 py-8">
+                    {/* PWA Handler */}
+                    <PWAHandler />
+                    
+                    {/* Network Status Indicator */}
+                    {!isOnline && (
+                        <div className="mb-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-2xl flex items-center gap-2">
+                            <Icon name="wifi-off" size={16} className="text-amber-400" />
+                            <span className="text-amber-300">Offline Mode - Using cached data</span>
+                        </div>
+                    )}
+                    
+                    {/* Navigation Bar */}
+                    <nav className="flex justify-between items-center mb-12 glass p-2 rounded-2xl">
+                        <div className="flex items-center gap-3 px-4">
+                            <div className="bg-indigo-500 p-2 rounded-lg animate-pulse">
+                                <Icon name="graduation-cap" className="text-white" />
+                            </div>
+                            <span className="font-extrabold text-xl tracking-tighter">BdMO <span className="text-indigo-400">2026</span></span>
+                            {isOnline ? (
+                                <div className="flex items-center gap-1 text-xs text-green-400">
+                                    <Icon name="wifi" size={12} />
+                                    <span>Online</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1 text-xs text-amber-400">
+                                    <Icon name="wifi-off" size={12} />
+                                    <span>Offline</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-1">
+                            <button onClick={() => setMode('student')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${mode === 'student' ? 'bg-indigo-600 shadow-lg' : 'hover:bg-white/5'}`}>Finder</button>
+                            <button onClick={() => setMode('admin')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${mode === 'admin' ? 'bg-amber-500 shadow-lg' : 'hover:bg-white/5'}`}>Admin Panel</button>
+                        </div>
+                    </nav>
+
+                    {mode === 'student' ? (
+                        <StudentView 
+                            data={data} 
+                            activeTab={activeTab} 
+                            setActiveTab={setActiveTab} 
+                            rollNumber={rollNumber} 
+                            handleSearch={handleSearch}
+                            searchResult={searchResult}
+                            isOnline={isOnline}
+                        />
+                    ) : (
+                        <AdminView existingData={data} onUpdate={setData} isOnline={isOnline} />
+                    )}
+                </div>
+            );
+        };
+
+        // --- Student Interface ---
+        const StudentView = ({ data, activeTab, setActiveTab, rollNumber, handleSearch, searchResult, isOnline }) => {
+            if (!data) return (
+                <div className="text-center py-20 glass rounded-3xl">
+                    {isOnline ? (
+                        <div className="space-y-4">
+                            <Icon name="database" size={48} className="mx-auto text-slate-400" />
+                            <p>No data found. Use Admin mode to create data.json</p>
+                            <p className="text-sm text-slate-400">Or the file is being loaded...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <Icon name="cloud-off" size={48} className="mx-auto text-amber-400" />
+                            <p>Offline Mode - No cached data available</p>
+                            <p className="text-sm text-slate-400">Connect to internet to load data</p>
+                        </div>
+                    )}
+                </div>
+            );
+
+            return (
+                <div className="space-y-8 animate-in fade-in duration-700">
+                    <section className="text-center space-y-4">
+                        <h2 className="text-5xl font-extrabold tracking-tight">Find Your Seat</h2>
+                        <p className="text-slate-400">Enter your roll number below to get instant directions.</p>
+                        {!isOnline && (
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm">
+                                <Icon name="download" size={12} />
+                                <span>Offline - Data may not be latest</span>
+                            </div>
+                        )}
+                    </section>
+
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {Object.keys(data).map(key => (
+                            <button 
+                                key={key}
+                                onClick={() => setActiveTab(key)}
+                                className={`px-6 py-3 rounded-2xl font-bold transition-all border ${activeTab === key ? 'bg-white text-indigo-950 border-white shadow-2xl scale-105' : 'glass border-white/10 hover:bg-white/10'}`}
+                            >
+                                {data[key].label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="relative max-w-2xl mx-auto">
+                        <Icon name="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <input 
+                            type="number" 
+                            placeholder={`Search in ${data[activeTab].label}...`}
+                            value={rollNumber}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="w-full bg-white/5 border-2 border-white/10 rounded-3xl py-6 pl-14 pr-6 text-2xl font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all shadow-inner"
+                        />
+                    </div>
+
+                    {searchResult && (
+                        <div className="max-w-2xl mx-auto animate-float">
+                            {searchResult.type === 'success' && (
+                                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 rounded-[2rem] shadow-2xl border border-white/20 text-center">
+                                    <span className="text-xs font-black uppercase tracking-[0.3em] opacity-70">Confirmed Location</span>
+                                    <h3 className="text-7xl font-black my-2">{searchResult.room}</h3>
+                                    <p className="text-xl font-medium">{searchResult.category} Category</p>
+                                    <div className="mt-4 pt-4 border-t border-white/20 flex justify-center gap-6 text-sm">
+                                        <span className="flex items-center gap-2"><Icon name="clock" size={16}/> {searchResult.time}</span>
+                                        <span className="flex items-center gap-2"><Icon name="map-pin" size={16}/> St. Joseph School</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {searchResult.type === 'suggestion' && (
+                                <div className="bg-amber-500/20 border-2 border-amber-500/50 p-6 rounded-3xl text-center">
+                                    <Icon name="info" className="mx-auto mb-2 text-amber-400" />
+                                    <p className="text-amber-200">Roll found in <span className="font-bold text-white">{searchResult.label}</span> category instead.</p>
+                                    <button onClick={() => setActiveTab(searchResult.key)} className="mt-4 bg-amber-500 text-white px-6 py-2 rounded-xl font-bold">Switch to {searchResult.label}</button>
+                                </div>
+                            )}
+
+                            {searchResult.type === 'not_found' && (
+                                <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-3xl text-center">
+                                    <Icon name="alert-circle" className="mx-auto mb-2 text-red-400" />
+                                    <p className="text-red-400 font-semibold italic">No record found for this roll number.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Admin Panel (JSON Maker) ---
+        const AdminView = ({ existingData, onUpdate, isOnline }) => {
+            const [localData, setLocalData] = useState(existingData || {
+                primary: { label: "Primary", time: "09:30 AM", ranges: [] },
+                junior: { label: "Junior", time: "12:30 PM", ranges: [] },
+                secondary: { label: "Secondary", time: "03:00 PM", ranges: [] },
+                higher_secondary: { label: "Higher Secondary", time: "03:00 PM", ranges: [] }
+            });
+
+            const [targetCat, setTargetCat] = useState('primary');
+            const [newRange, setNewRange] = useState({ room: '', start: '', end: '' });
+
+            const addRange = () => {
+                if(!newRange.room || !newRange.start || !newRange.end) return;
+                const updated = { ...localData };
+                updated[targetCat].ranges.push({
+                    room: newRange.room,
+                    start: parseInt(newRange.start),
+                    end: parseInt(newRange.end)
+                });
+                updated[targetCat].ranges.sort((a,b) => a.start - b.start);
+                setLocalData(updated);
+                setNewRange({ room: '', start: '', end: '' });
+                onUpdate(updated);
+            };
+
+            const downloadJSON = () => {
+                const blob = new Blob([JSON.stringify({ categories: localData }, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data.json';
+                a.click();
+                
+                // Also cache the data for offline use
+                if ('caches' in window) {
+                    const response = new Response(blob, {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    caches.open('bdmo-data').then(cache => {
+                        cache.put('data.json', response);
+                    });
+                }
+            };
+
+            return (
+                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <header className="flex justify-between items-end border-b border-white/10 pb-6">
+                        <div>
+                            <h2 className="text-3xl font-bold">JSON Architect</h2>
+                            <p className="text-slate-400">Manage and generate seat plan data</p>
+                            {!isOnline && (
+                                <div className="inline-flex items-center gap-2 px-2 py-1 bg-amber-500/20 rounded text-xs mt-1">
+                                    <Icon name="wifi-off" size={10} />
+                                    <span>Offline - Changes saved locally only</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            {isOnline && (
+                                <button onClick={downloadJSON} className="bg-green-600 hover:bg-green-500 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                                    <Icon name="download" /> Export data.json
+                                </button>
+                            )}
+                            {!isOnline && (
+                                <div className="px-4 py-3 rounded-2xl font-bold flex items-center gap-2 bg-slate-700/50 text-slate-400">
+                                    <Icon name="cloud-off" /> Offline Mode
+                                </div>
+                            )}
+                        </div>
+                    </header>
+
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {/* Editor Sidebar */}
+                        <div className="glass p-6 rounded-3xl space-y-4">
+                            <h4 className="font-bold flex items-center gap-2 text-indigo-400"><Icon name="plus-circle" /> Add New Range</h4>
+                            <select value={targetCat} onChange={(e) => setTargetCat(e.target.value)} className="w-full bg-white/10 p-3 rounded-xl outline-none">
+                                {Object.keys(localData).map(k => <option key={k} value={k}>{localData[k].label}</option>)}
+                            </select>
+                            <input type="text" placeholder="Room (e.g. S 202)" value={newRange.room} onChange={e => setNewRange({...newRange, room: e.target.value})} className="w-full bg-white/10 p-3 rounded-xl outline-none" />
+                            <div className="grid grid-cols-2 gap-2">
+                                <input type="number" placeholder="Start Roll" value={newRange.start} onChange={e => setNewRange({...newRange, start: e.target.value})} className="bg-white/10 p-3 rounded-xl outline-none" />
+                                <input type="number" placeholder="End Roll" value={newRange.end} onChange={e => setNewRange({...newRange, end: e.target.value})} className="bg-white/10 p-3 rounded-xl outline-none" />
+                            </div>
+                            <button onClick={addRange} className="w-full bg-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">Add to List</button>
+                        </div>
+
+                        {/* Preview Table */}
+                        <div className="md:col-span-2 glass rounded-3xl overflow-hidden flex flex-col">
+                            <div className="p-4 bg-white/5 font-bold flex justify-between items-center">
+                                <span>Preview: {localData[targetCat].label}</span>
+                                <span className="text-xs text-slate-400">{localData[targetCat].ranges.length} entries</span>
+                            </div>
+                            <div className="flex-1 overflow-y-auto max-h-[400px]">
+                                <table className="w-full text-left">
+                                    <thead className="text-xs uppercase text-slate-500 sticky top-0 bg-slate-900/50 backdrop-blur-md">
+                                        <tr>
+                                            <th className="p-4">Room</th>
+                                            <th className="p-4">Roll Range</th>
+                                            <th className="p-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {localData[targetCat].ranges.map((r, i) => (
+                                            <tr key={i} className="hover:bg-white/5">
+                                                <td className="p-4 font-bold">{r.room}</td>
+                                                <td className="p-4 text-slate-300">{r.start} - {r.end}</td>
+                                                <td className="p-4">
+                                                    <button onClick={() => {
+                                                        const d = {...localData};
+                                                        d[targetCat].ranges.splice(i, 1);
+                                                        setLocalData(d);
+                                                    }} className="text-red-400 hover:text-red-300"><Icon name="trash-2" size={16}/></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').then(
+                    function(registration) {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    },
+                    function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    }
+                );
+            });
+        }
+        
+        // Cache external resources for offline use
+        window.addEventListener('load', function() {
+            if ('caches' in window) {
+                const cacheResources = [
+                    'https://unpkg.com/react@18/umd/react.production.min.js',
+                    'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+                    'https://unpkg.com/@babel/standalone/babel.min.js',
+                    'https://cdn.tailwindcss.com',
+                    'https://unpkg.com/lucide@latest',
+                    'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap',
+                    './'
+                ];
+                
+                caches.open('bdmo-static').then(cache => {
+                    return cache.addAll(cacheResources);
+                }).catch(error => {
+                    console.log('Caching failed:', error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
