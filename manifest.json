@@ -1,0 +1,21 @@
+{
+  "name": "BdMO Smart Portal 2026",
+  "short_name": "BdMO 2026",
+  "description": "Bangladesh Mathematical Olympiad 2026 - Seat Finder & Admin Portal",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4338ca",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
