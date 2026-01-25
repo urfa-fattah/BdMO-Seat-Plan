@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BdMO Smart Portal 2026</title>
     
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- iOS Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BdMO 2026">
     <link rel="apple-touch-icon" href="icon.png">
     
-    <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4338ca">
     <meta name="description" content="Bangladesh Mathematical Olympiad 2026 - Seat Finder & Admin Portal">
     
@@ -47,7 +44,6 @@
 <body class="premium-gradient min-h-screen text-slate-100">
     <div id="root"></div>
 
-    <!-- PWA Installation Prompt -->
     <div id="installPrompt" class="hidden fixed bottom-0 left-0 right-0 bg-gradient-to-r from-indigo-600 to-purple-600 p-4 shadow-2xl install-prompt z-50">
         <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -66,7 +62,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="mt-12 py-6 text-center border-t border-white/10 bg-white/5">
         <div class="max-w-5xl mx-auto px-6">
             <p class="text-slate-400">
@@ -339,9 +334,9 @@
             );
 
             return (
-                <div className="space-y-8 animate-in fade-in duration-700">
+                <div className="space-y-4 animate-in fade-in duration-700">
                     <section className="text-center space-y-4">
-                        <h2 className="text-5xl font-extrabold tracking-tight">Find Your Seat</h2>
+                        <h2 className="text-3xl font-extrabold tracking-tight">Find Your Seat</h2>
                         <p className="text-slate-400">Enter your roll number below to get instant directions.</p>
                         {!isOnline && (
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm">
@@ -365,19 +360,38 @@
 
                     <div className="relative max-w-2xl mx-auto">
                         <Icon name="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" />
+                        
                         <input 
                             type="number" 
                             placeholder={`Search in ${data[activeTab].label}...`}
                             value={rollNumber}
                             onChange={(e) => handleSearch(e.target.value)}
-                            className="w-full bg-white/5 border-2 border-white/10 rounded-3xl py-6 pl-14 pr-6 text-2xl font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all shadow-inner"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.target.blur();
+                                }
+                            }}
+                            className="w-full bg-white/5 border-2 border-white/10 rounded-3xl py-3 pl-14 pr-24 text-2xl font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all shadow-inner"
                         />
+                        
+                        {/* Search Button that hides keyboard */}
+                        <button 
+                            onClick={() => {
+                                if (document.activeElement instanceof HTMLElement) {
+                                    document.activeElement.blur();
+                                }
+                            }}
+                            className="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-2xl font-bold transition-colors shadow-lg flex items-center gap-2"
+                        >
+                            <span className="hidden sm:inline">Search</span>
+                            <Icon name="arrow-right" size={20} />
+                        </button>
                     </div>
 
                     {searchResult && (
                         <div className="max-w-2xl mx-auto animate-float">
                             {searchResult.type === 'success' && (
-                                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 rounded-[2rem] shadow-2xl border border-white/20 text-center">
+                                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[2rem] shadow-2xl border border-white/20 text-center">
                                     <span className="text-xs font-black uppercase tracking-[0.3em] opacity-70">Confirmed Location</span>
                                     <h3 className="text-7xl font-black my-2">{searchResult.room}</h3>
                                     <p className="text-xl font-medium">{searchResult.category} Category</p>
@@ -537,7 +551,6 @@
         root.render(<App />);
     </script>
 
-    <!-- Service Worker Registration -->
     <script>
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
